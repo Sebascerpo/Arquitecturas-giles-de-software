@@ -22,7 +22,12 @@ Este microservicio está diseñado para gestionar clientes y sus canales de comu
    source venv/bin/activate (en mac)
    venv\Scripts\activate (en windows) 
 ```
-3. Ejecuta la aplicacion:
+
+3. Descarga los requirements para la aplicación
+```bash
+  pip install -r requirements.txt
+```
+4. Ejecuta la aplicacion:
 
 ```bash
 flask run
