@@ -1,10 +1,31 @@
-version: '3'
+version: "3"
 services:
-  app1:
+  canales:
     build: ./canales
     ports:
       - "5002:5000"
-  app2:
+    networks:
+      - app-network
+
+  monitor:
     build: ./monitor
     ports:
       - "5001:5000"
+    depends_on:
+      - canales
+    networks:
+      - app-network
+
+  streamlit-app:
+    build: ./monitor_front
+    ports:
+      - "8501:8501"
+    depends_on:
+      - canales
+      - monitor
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -18,7 +18,7 @@ def fetch_data(url):
 
 
 # Fetch data
-data = fetch_data("http://127.0.0.1:5000/logs")
+data = fetch_data("http://monitor:5000/logs")
 
 # Convert data to DataFrame
 if data:

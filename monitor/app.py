@@ -40,8 +40,8 @@ def monitor_endpoint():
             # trymonitor_endpoint:
             print("Running monitoring function...")
 
-            url = "http://ip.jsontest.com"
-            # url = "http://127.0.0.1:5002/health"
+            url = "http://canales:5000/health"
+
             response = requests.get(url)
             data = response.json()
             status = response.status_code
@@ -59,9 +59,9 @@ def monitor_endpoint():
             store_log(url, 404, str(e))  # Log errors
 
 
-# sched = BackgroundScheduler(daemon=True)
-# sched.add_job(monitor_endpoint, 'interval', seconds=60)
-# sched.start()
+sched = BackgroundScheduler(daemon=True)
+sched.add_job(monitor_endpoint, 'interval', seconds=60)
+sched.start()
 
 # Routes
 
