@@ -8,7 +8,7 @@ from datetime import datetime
 
 # Function to fetch data from the endpoint
 
-st_autorefresh(interval=5000, key="dataframerefresh")
+st_autorefresh(interval=10000, key="dataframerefresh")
 
 def fetch_data(url):
     try:

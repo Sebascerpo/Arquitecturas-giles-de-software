@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy.orm import relationship
+import os, signal
 
 app = Flask(__name__)
 
@@ -156,6 +157,12 @@ def obtener_canales(cliente_id):
 @app.route("/test-error", methods=["GET"])
 def test_error():
     raise Exception("Esto es una simulación de error interno")
+
+
+@app.route('/stopServer', methods=['GET'])
+def stopServer():
+    os.kill(os.getpid(), signal.SIGINT)
+    return jsonify({ "success": True, "message": "Server is shutting down..." })
 
 def create_tables():
     db.create_all()
