@@ -1,0 +1,142 @@
+{
+    "info": {
+        "_postman_id": "ea61e85b-be30-4fc9-9ae5-36c5833d9b22",
+        "name": "Experimento 1",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": ""
+    },
+    "item": [
+        {
+            "name": "Introducir error en el servidor",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "localhost:5002/test-error",
+                    "path": [
+                        "test-error"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                }
+            }
+        },
+        {
+            "name": "Health check",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "localhost:5002/health",
+                    "path": [
+                        "health"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                }
+            }
+        },
+        {
+            "name": "Consulta de registros por cliente",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "localhost:5002/canales/3",
+                    "path": [
+                        "canales",
+                        "3"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                }
+            }
+        },
+        {
+            "name": "Consulta de registros por canal",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "localhost:5002/mensajes/email",
+                    "path": [
+                        "mensajes",
+                        "email"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                }
+            }
+        },
+        {
+            "name": "Creación de registro en canal",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "localhost:5002/canal",
+                    "path": [
+                        "canal"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"tipo\": \"llamada\",\n  \"contenido\": \"Hola, los felicito por el servicio.\",\n  \"cliente_id\": 3\n}"
+                }
+            }
+        },
+        {
+            "name": "Listado de clientes",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "localhost:5002/clientes",
+                    "path": [
+                        "clientes"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                }
+            }
+        },
+        {
+            "name": "Registro cliente",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "localhost:5002/cliente",
+                    "path": [
+                        "cliente"
+                    ],
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "5002"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"nombre\": \"Laura\",\n  \"tipo_servicio\": \"PQRS\"\n}"
+                }
+            }
+        }
+    ]
+}
