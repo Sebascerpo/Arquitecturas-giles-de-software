@@ -157,17 +157,16 @@ def obtener_canales(cliente_id):
 def test_error():
     raise Exception("Esto es una simulación de error interno")
 
-
-@app.before_request
 def create_tables():
     db.create_all()
 
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    print(f"Error: {str(e)}")
-    return jsonify({"mensaje": "Error interno del servidor"}), 500
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+#     print(f"Error: {str(e)}")
+#     return jsonify({"mensaje": "Error interno del servidor"}), 500
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        create_tables()
     app.run(debug=True, host="0.0.0.0")
