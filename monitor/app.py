@@ -20,7 +20,6 @@ class MonitorLogs(db.Model):
     timestamp = Column(DateTime, default=datetime.utcnow)
 
 
-@app.before_request
 def create_tables():
     db.create_all()
 
@@ -60,7 +59,7 @@ def monitor_endpoint():
 
 
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(monitor_endpoint, 'interval', seconds=60)
+sched.add_job(monitor_endpoint, 'interval', seconds=20)
 sched.start()
 
 # Routes
@@ -87,4 +86,6 @@ def get_logs():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    with app.app_context():
+        create_tables()
+    app.run(debug=False, host="0.0.0.0")
