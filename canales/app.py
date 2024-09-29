@@ -1,22 +1,36 @@
+import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy.orm import relationship
-import os, signal
+from hashlib import md5
+import signal
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+# PostgreSQL configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
+    f"{os.getenv('POSTGRES_PASSWORD', 'postgres')}@postgres:5432/{os.getenv('POSTGRES_DB', 'my_db')}"
+)
+
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
+
+# Get the secret key from the environment
+HASH_SECRET_KEY = os.getenv("HASH_SECRET_KEY")
 
 
 class Cliente(db.Model):
     id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     tipo_servicio = Column(String(50), nullable=False)
+    hash = Column(String(32), nullable=False)
     canales = relationship("Canal", backref="cliente", lazy=True)
 
 
@@ -26,6 +40,7 @@ class Canal(db.Model):
     contenido = Column(String(255), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
     cliente_id = Column(Integer, ForeignKey("cliente.id"), nullable=False)
+    hash = Column(String(32), nullable=False)
 
 
 @app.route("/health", methods=["GET"])
@@ -43,6 +58,9 @@ def registrar_cliente():
         return jsonify({"mensaje": "Nombre y tipo de servicio son obligatorios"}), 400
 
     nuevo_cliente = Cliente(nombre=nombre, tipo_servicio=tipo_servicio)
+
+    data_string = f"{nombre}{tipo_servicio}"
+    nuevo_cliente.hash = generate_hash(data_string, HASH_SECRET_KEY)
 
     try:
         db.session.add(nuevo_cliente)
@@ -96,6 +114,9 @@ def recibir_canal():
         return jsonify({"mensaje": f"El cliente con id {cliente_id} no existe"}), 404
 
     nuevo_canal = Canal(tipo=tipo, contenido=contenido, cliente_id=cliente_id)
+
+    data_string = f"{tipo}{contenido}{cliente_id}"
+    nuevo_canal.hash = generate_hash(data_string, HASH_SECRET_KEY)
 
     try:
         db.session.add(nuevo_canal)
@@ -162,15 +183,16 @@ def test_error():
 @app.route('/stopServer', methods=['GET'])
 def stopServer():
     os.kill(os.getpid(), signal.SIGINT)
-    return jsonify({ "success": True, "message": "Server is shutting down..." })
+    return jsonify({"success": True, "message": "Server is shutting down..."})
+
 
 def create_tables():
     db.create_all()
 
-# @app.errorhandler(Exception)
-# def handle_exception(e):
-#     print(f"Error: {str(e)}")
-#     return jsonify({"mensaje": "Error interno del servidor"}), 500
+
+def generate_hash(data_string, key):
+    hash_string = data_string + key
+    return md5(hash_string.encode()).hexdigest()
 
 
 if __name__ == "__main__":

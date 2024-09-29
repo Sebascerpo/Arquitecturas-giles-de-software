@@ -6,6 +6,10 @@ services:
       - "5002:5000"
     networks:
       - app-network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: my_db
 
   monitor:
     build: ./monitor
@@ -23,6 +27,19 @@ services:
     depends_on:
       - canales
       - monitor
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=my_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
 

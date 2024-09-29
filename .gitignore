@@ -4,3 +4,7 @@ venv/
 env/
 
 .DS_Store
+
+postgres_data
+
+.env
