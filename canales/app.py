@@ -11,13 +11,13 @@ import signal
 
 app = Flask(__name__)
 
-# PostgreSQL configuration
-# app.config["SQLALCHEMY_DATABASE_URI"] = (
-#     f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
-#     f"{os.getenv('POSTGRES_PASSWORD', 'postgres')}@postgres:5432/{os.getenv('POSTGRES_DB', 'my_db')}"
-# )
+#PostgreSQL configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
+    f"{os.getenv('POSTGRES_PASSWORD', 'postgres')}@postgres_db:5432/{os.getenv('POSTGRES_DB', 'my_db')}"
+)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost:5432/my_db"
+#app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost:5432/my_db"
 
 
 # app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
@@ -222,4 +222,4 @@ def generate_object_hash(obj):
 if __name__ == "__main__":
     with app.app_context():
         create_tables()
-    app.run(debug=True, host="0.0.0.0", port=5002)
+    app.run(debug=True, host="0.0.0.0")
