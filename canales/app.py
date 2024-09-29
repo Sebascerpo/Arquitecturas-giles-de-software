@@ -1,3 +1,4 @@
+from sqlalchemy.inspection import inspect
 import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -11,10 +12,13 @@ import signal
 app = Flask(__name__)
 
 # PostgreSQL configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
-    f"{os.getenv('POSTGRES_PASSWORD', 'postgres')}@postgres:5432/{os.getenv('POSTGRES_DB', 'my_db')}"
-)
+# app.config["SQLALCHEMY_DATABASE_URI"] = (
+#     f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
+#     f"{os.getenv('POSTGRES_PASSWORD', 'postgres')}@postgres:5432/{os.getenv('POSTGRES_DB', 'my_db')}"
+# )
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost:5432/my_db"
+
 
 # app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
 
@@ -57,14 +61,18 @@ def registrar_cliente():
     if not nombre or not tipo_servicio:
         return jsonify({"mensaje": "Nombre y tipo de servicio son obligatorios"}), 400
 
-    nuevo_cliente = Cliente(nombre=nombre, tipo_servicio=tipo_servicio)
-
-    data_string = f"{nombre}{tipo_servicio}"
-    nuevo_cliente.hash = generate_hash(data_string, HASH_SECRET_KEY)
+    nuevo_cliente = Cliente(
+        nombre=nombre, tipo_servicio=tipo_servicio, hash="0")
 
     try:
         db.session.add(nuevo_cliente)
         db.session.commit()
+
+        nuevo_cliente.hash = generate_object_hash(
+            nuevo_cliente)
+
+        db.session.commit()
+
     except IntegrityError:
         db.session.rollback()
         return jsonify({"mensaje": "Error al registrar cliente"}), 500
@@ -113,14 +121,18 @@ def recibir_canal():
     if not cliente:
         return jsonify({"mensaje": f"El cliente con id {cliente_id} no existe"}), 404
 
-    nuevo_canal = Canal(tipo=tipo, contenido=contenido, cliente_id=cliente_id)
-
-    data_string = f"{tipo}{contenido}{cliente_id}"
-    nuevo_canal.hash = generate_hash(data_string, HASH_SECRET_KEY)
+    nuevo_canal = Canal(tipo=tipo, contenido=contenido,
+                        cliente_id=cliente_id, hash="0")
 
     try:
         db.session.add(nuevo_canal)
         db.session.commit()
+
+        nuevo_canal.hash = generate_object_hash(
+            nuevo_canal)
+
+        db.session.commit()
+
     except IntegrityError:
         db.session.rollback()
         return jsonify({"mensaje": "Error al guardar la información"}), 500
@@ -190,12 +202,24 @@ def create_tables():
     db.create_all()
 
 
-def generate_hash(data_string, key):
-    hash_string = data_string + key
-    return md5(hash_string.encode()).hexdigest()
+def generate_object_hash(obj):
+    # Get the model's columns (excluding the 'hash' column)
+    columns = inspect(obj.__class__).columns.keys()
+    values = []
+
+    for column in columns:
+        if column != 'hash':  # Exclude the 'hash' column
+            value = getattr(obj, column, None)
+            values.append(str(value) if value is not None else '')
+
+    # Join the values and append the secret key
+    data_string = ''.join(values) + HASH_SECRET_KEY
+
+    # Generate and return the MD5 hash
+    return md5(data_string.encode()).hexdigest()
 
 
 if __name__ == "__main__":
     with app.app_context():
         create_tables()
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0", port=5002)
