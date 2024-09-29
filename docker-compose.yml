@@ -4,8 +4,15 @@ services:
     build: ./canales
     ports:
       - "5002:5000"
+    environment:
+      - POSTGRES_DB=my_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - HASH_SECRET_KEY=4f3e8f3b6f4d2e8f90baf8d0ec8b6c4b
     networks:
       - app-network
+    depends_on:
+      - postgres_db
 
   monitor:
     build: ./monitor
@@ -23,6 +30,19 @@ services:
     depends_on:
       - canales
       - monitor
+    networks:
+      - app-network
+    
+  postgres_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=my_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
 

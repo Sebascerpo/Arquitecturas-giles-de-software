@@ -1,22 +1,40 @@
+from sqlalchemy.inspection import inspect
+import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy.orm import relationship
-import os, signal
+from hashlib import md5
+import signal
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+#PostgreSQL configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:"
+    f"{os.getenv('POSTGRES_PASSWORD', 'postgres')}@postgres_db:5432/{os.getenv('POSTGRES_DB', 'my_db')}"
+)
+
+#app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost:5432/my_db"
+
+
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
+
+# Get the secret key from the environment
+HASH_SECRET_KEY = os.getenv("HASH_SECRET_KEY")
 
 
 class Cliente(db.Model):
     id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     tipo_servicio = Column(String(50), nullable=False)
+    hash = Column(String(32), nullable=False)
     canales = relationship("Canal", backref="cliente", lazy=True)
 
 
@@ -26,6 +44,7 @@ class Canal(db.Model):
     contenido = Column(String(255), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
     cliente_id = Column(Integer, ForeignKey("cliente.id"), nullable=False)
+    hash = Column(String(32), nullable=False)
 
 
 @app.route("/health", methods=["GET"])
@@ -42,11 +61,18 @@ def registrar_cliente():
     if not nombre or not tipo_servicio:
         return jsonify({"mensaje": "Nombre y tipo de servicio son obligatorios"}), 400
 
-    nuevo_cliente = Cliente(nombre=nombre, tipo_servicio=tipo_servicio)
+    nuevo_cliente = Cliente(
+        nombre=nombre, tipo_servicio=tipo_servicio, hash="0")
 
     try:
         db.session.add(nuevo_cliente)
         db.session.commit()
+
+        nuevo_cliente.hash = generate_object_hash(
+            nuevo_cliente)
+
+        db.session.commit()
+
     except IntegrityError:
         db.session.rollback()
         return jsonify({"mensaje": "Error al registrar cliente"}), 500
@@ -95,11 +121,18 @@ def recibir_canal():
     if not cliente:
         return jsonify({"mensaje": f"El cliente con id {cliente_id} no existe"}), 404
 
-    nuevo_canal = Canal(tipo=tipo, contenido=contenido, cliente_id=cliente_id)
+    nuevo_canal = Canal(tipo=tipo, contenido=contenido,
+                        cliente_id=cliente_id, hash="0")
 
     try:
         db.session.add(nuevo_canal)
         db.session.commit()
+
+        nuevo_canal.hash = generate_object_hash(
+            nuevo_canal)
+
+        db.session.commit()
+
     except IntegrityError:
         db.session.rollback()
         return jsonify({"mensaje": "Error al guardar la información"}), 500
@@ -162,15 +195,28 @@ def test_error():
 @app.route('/stopServer', methods=['GET'])
 def stopServer():
     os.kill(os.getpid(), signal.SIGINT)
-    return jsonify({ "success": True, "message": "Server is shutting down..." })
+    return jsonify({"success": True, "message": "Server is shutting down..."})
+
 
 def create_tables():
     db.create_all()
 
-# @app.errorhandler(Exception)
-# def handle_exception(e):
-#     print(f"Error: {str(e)}")
-#     return jsonify({"mensaje": "Error interno del servidor"}), 500
+
+def generate_object_hash(obj):
+    # Get the model's columns (excluding the 'hash' column)
+    columns = inspect(obj.__class__).columns.keys()
+    values = []
+
+    for column in columns:
+        if column != 'hash':  # Exclude the 'hash' column
+            value = getattr(obj, column, None)
+            values.append(str(value) if value is not None else '')
+
+    # Join the values and append the secret key
+    data_string = ''.join(values) + HASH_SECRET_KEY
+
+    # Generate and return the MD5 hash
+    return md5(data_string.encode()).hexdigest()
 
 
 if __name__ == "__main__":
