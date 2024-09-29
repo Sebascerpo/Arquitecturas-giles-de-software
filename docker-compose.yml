@@ -1,5 +1,6 @@
 version: "3"
 services:
+
   canales:
     build: ./canales
     ports:
@@ -45,6 +46,22 @@ services:
       - ./postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
+
+  integrity:
+    build: ./integridad
+    ports:
+      - "5003:5000"
+    depends_on:
+      - canales
+    networks:
+      - app-network
+    environment:
+      - POSTGRES_DB=my_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - HASH_SECRET_KEY=4f3e8f3b6f4d2e8f90baf8d0ec8b6c4b
+      - MAIL_USERNAME=email@gmail.com
+      - MAIL_PASSWORD=XXXX YYYY ZZZZ AAAA
 
 networks:
   app-network:

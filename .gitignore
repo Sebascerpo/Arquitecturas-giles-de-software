@@ -8,3 +8,4 @@ env/
 postgres_data
 
 .env
+.python-version
